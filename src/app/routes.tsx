@@ -25,4 +25,6 @@ export const router = createBrowserRouter([
       { path: 'profile', Component: ProfilePage },
     ],
   },
-]);
+],
+{ basename: '/HCIS/' }
+);
