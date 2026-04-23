@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev:full": "node scripts/dev-with-api.mjs",
-    "build": "vite build"
+    "build": "npx vite build"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
