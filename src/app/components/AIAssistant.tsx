@@ -16,7 +16,7 @@ async function requestAssistantReply(
   pathname: string,
   cartItems: ReturnType<typeof useCart>['cartItems']
 ) {
-  const BACKEND_URL = 'https://hcisback.vercel.app/';
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8787';
   const response = await fetch(`${BACKEND_URL}/api/chat`, {
     method: 'POST',
     headers: {
