@@ -47,12 +47,8 @@ function loadEnvFile(filename) {
 loadEnvFile('.env');
 loadEnvFile('.env.local');
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const model = import.meta.env.VITE_GEMINI_MODEL;
-
-if (!apiKey) {
-  console.error('Gemini API key is not configured');
-}
+const port = Number(process.env.CHAT_API_PORT || 8787);
+const geminiApiKey = process.env.GEMINI_API_KEY;
 
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, {
