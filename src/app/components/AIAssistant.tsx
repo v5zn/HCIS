@@ -60,7 +60,7 @@ export function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Hi. I'm your StyleAI assistant.",
+      text: "Hi! I'm your StyleAI assistant.",
       sender: 'ai',
       timestamp: new Date(),
     },
