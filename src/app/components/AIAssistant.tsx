@@ -16,7 +16,7 @@ async function requestAssistantReply(
   pathname: string,
   cartItems: ReturnType<typeof useCart>['cartItems']
 ) {
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8787';
   const response = await fetch(`${BACKEND_URL}/server/chat-server.mjs`, {
     method: 'POST',
     headers: {
