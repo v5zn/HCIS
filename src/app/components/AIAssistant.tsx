@@ -17,7 +17,7 @@ async function requestAssistantReply(
   cartItems: ReturnType<typeof useCart>['cartItems']
 ) {
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-  const response = await fetch(`${BACKEND_URL}/api/chat`, {
+  const response = await fetch(`${BACKEND_URL}/server/chat-server.mjs`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
