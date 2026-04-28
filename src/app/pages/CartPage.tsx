@@ -4,7 +4,6 @@ import { useCart } from '../context/CartContext';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { allProducts, Product } from '../data/products';
 import { useState, useEffect } from 'react';
-import { buildApiUrl } from '../lib/api';
 
 type CartPreviewItem = {
   id: number;
@@ -77,7 +76,7 @@ export function CartPage() {
 
     const fetchRecommendation = async () => {
       try {
-        const response = await fetch(buildApiUrl('/api/cart-recommendation'), {
+        const response = await fetch('/api/cart-recommendation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
