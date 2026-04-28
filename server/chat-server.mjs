@@ -47,7 +47,7 @@ function loadEnvFile(filename) {
 loadEnvFile('.env');
 loadEnvFile('.env.local');
 
-const port = Number(process.env.CHAT_API_PORT || 8787);
+const port = Number(process.env.PORT || process.env.CHAT_API_PORT || 8787);
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
 function sendJson(res, statusCode, payload) {
