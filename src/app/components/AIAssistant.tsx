@@ -2,7 +2,6 @@ import { MessageCircle, X, Send } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router';
 import { useCart } from '../context/CartContext';
-import { buildApiUrl } from '../lib/api';
 import { buildLocalAssistantResponse, buildSiteContext } from '../lib/chatFallback';
 
 interface Message {
@@ -17,7 +16,7 @@ async function requestAssistantReply(
   pathname: string,
   cartItems: ReturnType<typeof useCart>['cartItems']
 ) {
-  const response = await fetch(buildApiUrl('/api/chat'), {
+  const response = await fetch('/api/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
