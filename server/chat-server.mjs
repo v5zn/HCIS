@@ -47,13 +47,14 @@ function loadEnvFile(filename) {
 loadEnvFile('.env');
 loadEnvFile('.env.local');
 
-const port = Number(process.env.PORT || process.env.CHAT_API_PORT || 8787);
+const port = Number(process.env.CHAT_API_PORT || 8787);
 const geminiApiKey = process.env.GEMINI_API_KEY;
+const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
 
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'POST,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   });
