@@ -3,12 +3,12 @@ import { useState } from 'react';
 
 export function DiscountPrediction() {
   const [isVisible, setIsVisible] = useState(true);
-  const [isNotified, setIsNotified] = useState(false);
+  const [activeNotification, setActiveNotification] = useState<'default' | 'threshold' | null>(null);
 
   if (!isVisible) return null;
 
-  const handleNotifyClick = () => {
-    setIsNotified(true);
+  const handleNotifyClick = (type: 'default' | 'threshold') => {
+    setActiveNotification(type);
     setTimeout(() => {
       setIsVisible(false);
     }, 2000);
@@ -37,37 +37,65 @@ export function DiscountPrediction() {
           {/* Prediction */}
           <div className="mb-3">
             <p className="text-sm font-semibold text-gray-900 mb-1">
-              {isNotified ? 'Notification Set!' : 'Price may drop 15% in 3 days'}
+              {activeNotification ? 'Notification Set!' : 'Price may drop 15% in 3 days'}
             </p>
             <p className="text-xs text-gray-600">
-              {isNotified
+              {activeNotification
                 ? "We'll notify you when the price drops!"
-                : 'We predict a price reduction for items you`ve frequently checked.'}
+                : 'Based on last year`s sales, we predict a price drop for items you`ve frequently checked.'}
             </p>
           </div>
 
-          {/* Notify Button */}
-          <button
-            onClick={handleNotifyClick}
-            disabled={isNotified}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs w-full justify-center ${
-              isNotified
-                ? 'bg-green-600 text-white cursor-default'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isNotified ? (
-              <>
-                <Check className="w-3 h-3" />
-                Notification Active
-              </>
-            ) : (
-              <>
-                <Bell className="w-3 h-3" />
-                Notify Me
-              </>
-            )}
-          </button>
+          {/* Notify Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleNotifyClick('default')}
+              disabled={activeNotification !== null}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs flex-1 justify-center ${
+                activeNotification === 'default'
+                  ? 'bg-green-600 text-white cursor-default'
+                  : activeNotification !== null
+                    ? 'bg-blue-600 text-white opacity-60 cursor-default'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {activeNotification === 'default' ? (
+                <>
+                  <Check className="w-3 h-3" />
+                  Notification Active
+                </>
+              ) : (
+                <>
+                  <Bell className="w-3 h-3" />
+                  Notify Me
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={() => handleNotifyClick('threshold')}
+              disabled={activeNotification !== null}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs flex-1 justify-center ${
+                activeNotification === 'threshold'
+                  ? 'bg-green-600 text-white cursor-default'
+                  : activeNotification !== null
+                    ? 'bg-blue-600 text-white opacity-60 cursor-default'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {activeNotification === 'threshold' ? (
+                <>
+                  <Check className="w-3 h-3" />
+                  Notification Active
+                </>
+              ) : (
+                <>
+                  <Bell className="w-3 h-3" />
+                  Nofity if more than 40%
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
