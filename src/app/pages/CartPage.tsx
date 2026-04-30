@@ -127,7 +127,8 @@ export function CartPage() {
             ? data.cta.trim()
             : 'Add & Get Free Shipping'
         );
-      } catch {
+      } catch (error) {
+        console.error('Cart recommendation request failed. Falling back to local recommendation.', error);
         if (isCancelled) {
           return;
         }
