@@ -49,14 +49,32 @@ loadEnvFile('.env.local');
 
 const port = Number(process.env.CHAT_API_PORT || 8787);
 const geminiApiKey = process.env.GEMINI_API_KEY;
-const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
+const allowedOrigins = (process.env.ALLOWED_ORIGIN || '*')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-function sendJson(res, statusCode, payload) {
+function getCorsOriginHeader(req) {
+  const requestOrigin = req.headers.origin;
+
+  if (allowedOrigins.includes('*')) {
+    return '*';
+  }
+
+  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    return requestOrigin;
+  }
+
+  return allowedOrigins[0] || '*';
+}
+
+function sendJson(req, res, statusCode, payload) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': getCorsOriginHeader(req),
     'Access-Control-Allow-Methods': 'POST,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    Vary: 'Origin',
   });
   res.end(JSON.stringify(payload));
 }
@@ -147,52 +165,82 @@ async function generateGeminiContent(parts, generationConfig = {}) {
     throw error;
   }
 
-  const model = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': geminiApiKey,
-    },
-    body: JSON.stringify({
-      contents: parts.map((text) => ({
-        role: 'user',
-        parts: [{ text }],
-      })),
-      generationConfig: {
-        thinkingConfig: {
-          thinkingLevel: 'low',
-        },
-        ...generationConfig,
+  const configuredModel = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
+  const modelCandidates = [
+    configuredModel,
+    ...(configuredModel === 'gemini-3.1-flash-lite' || configuredModel === 'gemini-3.1-flash-lite-preview'
+      ? ['gemini-3-flash-preview']
+      : []),
+  ];
+
+  let lastError = null;
+
+  for (const model of [...new Set(modelCandidates)]) {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': geminiApiKey,
       },
-    }),
-  });
+      body: JSON.stringify({
+        contents: parts.map((text) => ({
+          role: 'user',
+          parts: [{ text }],
+        })),
+        generationConfig: {
+          thinkingConfig: {
+            thinkingLevel: 'low',
+          },
+          ...generationConfig,
+        },
+      }),
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  logChatEvent('Gemini response received', {
-    status: response.status,
-    ok: response.ok,
-  });
+    logChatEvent('Gemini response received', {
+      model,
+      status: response.status,
+      ok: response.ok,
+    });
 
-  if (!response.ok) {
-    const error = new Error(data.error?.message || 'Gemini request failed.');
-    error.statusCode = response.status;
-    throw error;
+    if (!response.ok) {
+      const error = new Error(data.error?.message || 'Gemini request failed.');
+      error.statusCode = response.status;
+      lastError = error;
+
+      const canTryNextModel =
+        model !== modelCandidates[modelCandidates.length - 1] &&
+        [400, 404].includes(response.status);
+
+      if (canTryNextModel) {
+        logChatEvent('Retrying Gemini request with compatibility model', {
+          failedModel: model,
+          nextModel: modelCandidates[modelCandidates.indexOf(model) + 1],
+        });
+        continue;
+      }
+
+      throw error;
+    }
+
+    const text = data.candidates
+      ?.flatMap((candidate) => candidate.content?.parts || [])
+      .filter((part) => typeof part.text === 'string')
+      .map((part) => part.text)
+      .join('\n')
+      .trim();
+
+    if (!text) {
+      const error = new Error('Gemini returned an empty response.');
+      error.statusCode = 502;
+      throw error;
+    }
+
+    return text;
   }
 
-  const text = data.candidates
-    ?.flatMap((candidate) => candidate.content?.parts || [])
-    .filter((part) => typeof part.text === 'string')
-    .map((part) => part.text)
-    .join('\n')
-    .trim();
-
-  if (!text) {
-    throw new Error('Gemini returned an empty response.');
-  }
-
-  return text;
+  throw lastError || new Error('Gemini request failed.');
 }
 
 async function callGemini(payload) {
@@ -276,7 +324,7 @@ async function selectCartRecommendation(payload) {
 
 createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    sendJson(res, 204, {});
+    sendJson(req, res, 204, {});
     return;
   }
 
@@ -304,7 +352,7 @@ createServer(async (req, res) => {
       });
 
       if (!Array.isArray(payload.messages) || payload.messages.length === 0) {
-        sendJson(res, 400, { error: 'At least one chat message is required.' });
+        sendJson(req, res, 400, { error: 'At least one chat message is required.' });
         return;
       }
 
@@ -312,7 +360,7 @@ createServer(async (req, res) => {
       logChatEvent('Sending successful chat response', {
         replyLength: reply.length,
       });
-      sendJson(res, 200, { reply });
+      sendJson(req, res, 200, { reply });
       return;
     } catch (error) {
       logChatEvent('Chat request failed', {
@@ -320,7 +368,7 @@ createServer(async (req, res) => {
         error: error.message || 'Unexpected chat server error.',
       });
       const statusCode = error.statusCode || 500;
-      sendJson(res, statusCode, {
+      sendJson(req, res, statusCode, {
         error: error.message || 'Unexpected chat server error.',
       });
       return;
@@ -344,7 +392,7 @@ createServer(async (req, res) => {
       const payload = JSON.parse(rawBody || '{}');
       const recommendation = await selectCartRecommendation(payload);
 
-      sendJson(res, 200, recommendation);
+      sendJson(req, res, 200, recommendation);
       return;
     } catch (error) {
       logChatEvent('Cart recommendation request failed', {
@@ -352,14 +400,14 @@ createServer(async (req, res) => {
         error: error.message || 'Unexpected cart recommendation server error.',
       });
       const statusCode = error.statusCode || 500;
-      sendJson(res, statusCode, {
+      sendJson(req, res, statusCode, {
         error: error.message || 'Unexpected cart recommendation server error.',
       });
       return;
     }
   }
 
-  sendJson(res, 404, { error: 'Not found.' });
+  sendJson(req, res, 404, { error: 'Not found.' });
 }).listen(port, () => {
   console.log(`Chat API listening on http://localhost:${port}`);
   if (!geminiApiKey) {
