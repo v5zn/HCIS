@@ -72,7 +72,7 @@ export function CartPage() {
     let isCancelled = false;
 
     setRecommendation(fallbackRecommendation);
-    setRecommendationReason('Finding the best item to unlock free shipping...');
+    setRecommendationReason('Finding the best matching item to unlock free shipping...');
     setRecommendationCta('Add & Get Free Shipping');
 
     const fetchRecommendation = async () => {
@@ -133,7 +133,7 @@ export function CartPage() {
         }
 
         setRecommendation(fallbackRecommendation);
-        setRecommendationReason('This item is priced to get you close to the free shipping threshold.');
+        setRecommendationReason('This item matches your outfit, and gets you closer to the free shipping limit!');
         setRecommendationCta('Add & Get Free Shipping');
       }
     };
