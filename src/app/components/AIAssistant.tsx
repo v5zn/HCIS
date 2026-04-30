@@ -111,7 +111,8 @@ export function AIAssistant() {
           timestamp: new Date(),
         },
       ]);
-    } catch {
+    } catch (error) {
+      console.error('AI assistant request failed. Falling back to local response.', error);
       setMessages((prev) => [
         ...prev,
         {
