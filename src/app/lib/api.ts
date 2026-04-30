@@ -12,5 +12,12 @@ const apiBaseUrl = normalizeApiBaseUrl(rawApiBaseUrl);
 
 export function buildApiUrl(path: string) {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
+  // In local Vite development, use the relative /api path so requests go
+  // through the dev proxy to the locally started chat server.
+  if (import.meta.env.DEV) {
+    return normalizedPath;
+  }
+
   return apiBaseUrl ? `${apiBaseUrl}${normalizedPath}` : normalizedPath;
 }
