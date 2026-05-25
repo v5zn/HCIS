@@ -168,7 +168,7 @@ async function generateGeminiContent(parts, generationConfig = {}) {
   const configuredModel = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
   const modelCandidates = [
     configuredModel,
-    ...(configuredModel === 'gemini-3.1-flash-lite' || configuredModel === 'gemini-3.1-flash-lite-preview'
+    ...(configuredModel === 'gemini-3.1-flash-lite' || configuredModel === 'gemini-3.1-flash-lite'
       ? ['gemini-3-flash-preview']
       : []),
   ];
